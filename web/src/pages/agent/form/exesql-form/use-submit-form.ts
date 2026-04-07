@@ -19,7 +19,7 @@ export const FormSchema = z
   })
   .superRefine((v, ctx) => {
     if (
-      v.db_type !== 'trino' &&
+      !['trino', 'bigquery'].includes(v.db_type) &&
       !(v.password && v.password.trim().length > 0)
     ) {
       ctx.addIssue({

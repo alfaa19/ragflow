@@ -41,6 +41,7 @@ export enum DataSourceKey {
   SEAFILE = 'seafile',
   MYSQL = 'mysql',
   POSTGRESQL = 'postgresql',
+  BIGQUERY = 'bigquery',
   //   SHAREPOINT = 'sharepoint',
   //   SLACK = 'slack',
   //   TEAMS = 'teams',
@@ -185,6 +186,11 @@ export const generateDataSourceInfo = (t: TFunction) => {
       name: 'PostgreSQL',
       description: t(`setting.${DataSourceKey.POSTGRESQL}Description`),
       icon: <SvgIcon name={'data-source/postgresql'} width={38} />,
+    },
+    [DataSourceKey.BIGQUERY]: {
+      name: 'BigQuery',
+      description: t(`setting.${DataSourceKey.BIGQUERY}Description`),
+      icon: <SvgIcon name={'data-source/google-cloud-storage'} width={38} />,
     },
   };
 };
@@ -1035,6 +1041,70 @@ export const DataSourceFormFields = {
       tooltip: t('setting.postgresqlTimestampColumnTip'),
     },
   ],
+  [DataSourceKey.BIGQUERY]: [
+    {
+      label: 'Project ID',
+      name: 'config.project_id',
+      type: FormFieldType.Text,
+      required: true,
+      placeholder: 'my-gcp-project',
+    },
+    {
+      label: 'Dataset',
+      name: 'config.dataset',
+      type: FormFieldType.Text,
+      required: true,
+      placeholder: 'analytics_dataset',
+    },
+    {
+      label: 'Service Account JSON',
+      name: 'config.credentials.service_account_json',
+      type: FormFieldType.Textarea,
+      required: true,
+      tooltip: t('setting.bigqueryServiceAccountTip'),
+    },
+    {
+      label: 'SQL Query',
+      name: 'config.query',
+      type: FormFieldType.Textarea,
+      required: false,
+      placeholder:
+        'SELECT * FROM `my-gcp-project.analytics_dataset.table_name`',
+      tooltip: t('setting.bigqueryQueryTip'),
+    },
+    {
+      label: 'Content Columns',
+      name: 'config.content_columns',
+      type: FormFieldType.Text,
+      required: false,
+      placeholder: 'title,description,content',
+      tooltip: t('setting.bigqueryContentColumnsTip'),
+    },
+    {
+      label: 'Metadata Columns',
+      name: 'config.metadata_columns',
+      type: FormFieldType.Text,
+      required: false,
+      placeholder: 'id,category,status',
+      tooltip: t('setting.bigqueryMetadataColumnsTip'),
+    },
+    {
+      label: 'ID Column',
+      name: 'config.id_column',
+      type: FormFieldType.Text,
+      required: false,
+      placeholder: 'id',
+      tooltip: t('setting.bigqueryIdColumnTip'),
+    },
+    {
+      label: 'Timestamp Column',
+      name: 'config.timestamp_column',
+      type: FormFieldType.Text,
+      required: false,
+      placeholder: 'updated_at',
+      tooltip: t('setting.bigqueryTimestampColumnTip'),
+    },
+  ],
 };
 
 export const DataSourceFormDefaultValues = {
@@ -1384,6 +1454,22 @@ export const DataSourceFormDefaultValues = {
       credentials: {
         username: '',
         password: '',
+      },
+    },
+  },
+  [DataSourceKey.BIGQUERY]: {
+    name: '',
+    source: DataSourceKey.BIGQUERY,
+    config: {
+      project_id: '',
+      dataset: '',
+      query: '',
+      content_columns: '',
+      metadata_columns: '',
+      id_column: '',
+      timestamp_column: '',
+      credentials: {
+        service_account_json: '',
       },
     },
   },
