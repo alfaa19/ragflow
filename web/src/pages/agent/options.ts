@@ -2138,11 +2138,12 @@ export const ExeSQLOptions = [
   'postgres',
   'mariadb',
   'mssql',
+  'bigquery',
   'IBM DB2',
   'trino',
   'oceanbase',
 ].map((x) => ({
-  label: upperFirst(x),
+  label: x === 'bigquery' ? 'BigQuery' : upperFirst(x),
   value: x,
 }));
 
