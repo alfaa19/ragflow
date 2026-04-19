@@ -13,8 +13,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { useTranslate } from '@/hooks/common-hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { memo } from 'react';
-import { useForm, useFormContext } from 'react-hook-form';
+import { memo, useRef, useState } from 'react';
+import { useForm, useFormContext, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { initialExeSqlValues } from '../../constant';
@@ -33,6 +33,9 @@ const outputList = buildOutputList(initialExeSqlValues.outputs);
 export function ExeSQLFormWidgets({ loading }: { loading: boolean }) {
   const form = useFormContext();
   const { t } = useTranslate('flow');
+  const dbType = useWatch({ control: form.control, name: 'db_type' });
+  const serviceAccountInputRef = useRef<HTMLInputElement>(null);
+  const [serviceAccountFileName, setServiceAccountFileName] = useState('');
 
   return (
     <>
@@ -52,71 +55,116 @@ export function ExeSQLFormWidgets({ loading }: { loading: boolean }) {
           </FormItem>
         )}
       />
-      <FormField
-        control={form.control}
-        name="database"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>{t('database')}</FormLabel>
-            <FormControl>
-              <Input {...field}></Input>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="username"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>{t('username')}</FormLabel>
-            <FormControl>
-              <Input {...field}></Input>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="host"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>{t('host')}</FormLabel>
-            <FormControl>
-              <Input {...field}></Input>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="port"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>{t('port')}</FormLabel>
-            <FormControl>
-              <NumberInput {...field} className="w-full"></NumberInput>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="password"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>{t('password')}</FormLabel>
-            <FormControl>
-              <Input {...field} type="password"></Input>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {dbType === 'bigquery' ? (
+        <FormField
+          control={form.control}
+          name="service_account_json"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Service account JSON</FormLabel>
+              <FormControl>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={serviceAccountFileName || ''}
+                    readOnly
+                    placeholder="No file selected"
+                  />
+                  <ButtonLoading
+                    type="button"
+                    onClick={() => serviceAccountInputRef.current?.click()}
+                  >
+                    Upload JSON
+                  </ButtonLoading>
+                  <input
+                    ref={serviceAccountInputRef}
+                    className="hidden"
+                    type="file"
+                    accept=".json,application/json"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) {
+                        return;
+                      }
+                      const content = await file.text();
+                      field.onChange(content);
+                      setServiceAccountFileName(file.name);
+                    }}
+                  />
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      ) : (
+        <>
+          <FormField
+            control={form.control}
+            name="database"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('database')}</FormLabel>
+                <FormControl>
+                  <Input {...field}></Input>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="username"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('username')}</FormLabel>
+                <FormControl>
+                  <Input {...field}></Input>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="host"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('host')}</FormLabel>
+                <FormControl>
+                  <Input {...field}></Input>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="port"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('port')}</FormLabel>
+                <FormControl>
+                  <NumberInput {...field} className="w-full"></NumberInput>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('password')}</FormLabel>
+                <FormControl>
+                  <Input {...field} type="password"></Input>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </>
+      )}
 
       <FormField
         control={form.control}

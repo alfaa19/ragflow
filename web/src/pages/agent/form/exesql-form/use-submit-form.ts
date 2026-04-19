@@ -4,11 +4,12 @@ import { z } from 'zod';
 
 export const ExeSQLFormSchema = {
   db_type: z.string().min(1),
-  database: z.string().min(1),
-  username: z.string().min(1),
-  host: z.string().min(1),
+  database: z.string(),
+  username: z.string(),
+  host: z.string(),
   port: z.number(),
   password: z.string().optional().or(z.literal('')),
+  service_account_json: z.string().optional().or(z.literal('')),
   max_records: z.number(),
 };
 
@@ -18,8 +19,53 @@ export const FormSchema = z
     ...ExeSQLFormSchema,
   })
   .superRefine((v, ctx) => {
+    if (v.db_type === 'bigquery') {
+      if (
+        !(v.service_account_json && v.service_account_json.trim().length > 0)
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['service_account_json'],
+          message: 'String must contain at least 1 character(s)',
+        });
+      } else {
+        try {
+          JSON.parse(v.service_account_json);
+        } catch {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['service_account_json'],
+            message: 'Invalid JSON file content',
+          });
+        }
+      }
+      return;
+    }
+
+    if (!v.database.trim().length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['database'],
+        message: 'String must contain at least 1 character(s)',
+      });
+    }
+    if (!v.username.trim().length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['username'],
+        message: 'String must contain at least 1 character(s)',
+      });
+    }
+    if (!v.host.trim().length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['host'],
+        message: 'String must contain at least 1 character(s)',
+      });
+    }
+
     if (
-      !['trino', 'bigquery'].includes(v.db_type) &&
+      !['trino'].includes(v.db_type) &&
       !(v.password && v.password.trim().length > 0)
     ) {
       ctx.addIssue({
