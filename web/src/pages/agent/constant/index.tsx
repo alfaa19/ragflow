@@ -295,6 +295,7 @@ export const initialExeSqlValues = {
   host: '',
   port: 3306,
   password: '',
+  service_account_json: '',
   max_records: 1024,
   outputs: {
     formalized_content: {
