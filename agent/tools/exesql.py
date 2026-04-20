@@ -21,7 +21,6 @@ from abc import ABC
 import pandas as pd
 import pymysql
 import psycopg2
-import pyodbc
 from agent.tools.base import ToolParamBase, ToolBase, ToolMeta
 from common.connection_utils import timeout
 
@@ -52,6 +51,7 @@ class ExeSQLParam(ToolParamBase):
         self.port = 3306
         self.password = ""
         self.max_records = 1024
+        self.google_application_credentials_source = "adc"
         self.service_account_credentials_json = ""
 
     def check(self):
@@ -61,14 +61,14 @@ class ExeSQLParam(ToolParamBase):
             self.check_empty(self.username, "database username")
             self.check_empty(self.host, "IP Address")
             self.check_positive_integer(self.port, "IP Port")
-        if self.db_type != "trino":
-            self.check_empty(self.password, "Database password")
-        self.check_positive_integer(self.max_records, "Maximum number of records")
-        if self.database == "rag_flow":
-            if self.host == "ragflow-mysql":
-                raise ValueError("For the security reason, it dose not support database named rag_flow.")
-            if self.password == "infini_rag_flow":
-                raise ValueError("For the security reason, it dose not support database named rag_flow.")
+            if self.db_type != "trino":
+                self.check_empty(self.password, "Database password")
+            self.check_positive_integer(self.max_records, "Maximum number of records")
+            if self.database == "rag_flow":
+                if self.host == "ragflow-mysql":
+                    raise ValueError("For the security reason, it dose not support database named rag_flow.")
+                if self.password    == "infini_rag_flow":
+                    raise ValueError("For the security reason, it dose not support database named rag_flow.")
 
     def get_input_form(self) -> dict[str, dict]:
         return {
@@ -136,6 +136,10 @@ class ExeSQL(ToolBase, ABC):
             db = psycopg2.connect(dbname=self._param.database, user=self._param.username, host=self._param.host,
                                   port=self._param.port, password=self._param.password)
         elif self._param.db_type == 'mssql':
+            try:
+                import pyodbc
+            except ImportError:
+                raise Exception("Missing dependency 'pyodbc'. Please install system dependencies for ODBC.")
             conn_str = (
                     r'DRIVER={ODBC Driver 17 for SQL Server};'
                     r'SERVER=' + self._param.host + ',' + str(self._param.port) + ';'
@@ -244,9 +248,12 @@ class ExeSQL(ToolBase, ABC):
             from google.cloud import bigquery
             from google.cloud.bigquery import dbapi
 
-            service_account_info = json.loads(self._param.service_account_credentials_json)
-            credentials = service_account.Credentials.from_service_account_info(service_account_info)
-            client = bigquery.Client(credentials=credentials, project=credentials.project_id)
+            if self._param.google_application_credentials_source == "adc":
+                client = bigquery.Client()
+            else:
+                service_account_info = json.loads(self._param.service_account_credentials_json)
+                credentials = service_account.Credentials.from_service_account_info(service_account_info)
+                client = bigquery.Client(credentials=credentials, project=credentials.project_id)
             db = dbapi.Connection(client)
         try:
             cursor = db.cursor()
@@ -274,7 +281,21 @@ class ExeSQL(ToolBase, ABC):
                     single_res = pd.DataFrame.from_records(cursor.fetchmany(self._param.max_records),
                                                            columns=[desc[0] for desc in cursor.description])
                 else:
-                    single_res = pd.DataFrame([i for i in cursor.fetchmany(self._param.max_records)])
+                    # Convert Row objects to dictionaries to ensure JSON serializability
+                    rows = cursor.fetchmany(self._param.max_records)
+                    if rows:
+                        # Convert different types of row objects to dictionaries
+                        converted_rows = []
+                        for row in rows:
+                            if hasattr(row, '_asdict'):  # NamedTuple-like objects
+                                converted_rows.append(row._asdict())
+                            elif hasattr(row, 'keys'):  # Dict-like objects
+                                converted_rows.append(dict(row))
+                            else:  # Tuple or list objects
+                                converted_rows.append(list(row))
+                        single_res = pd.DataFrame(converted_rows)
+                    else:
+                        single_res = pd.DataFrame()
                     single_res.columns = [i[0] for i in cursor.description]
 
                 for col in single_res.columns:

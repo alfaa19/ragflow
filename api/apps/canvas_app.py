@@ -452,7 +452,7 @@ async def debug():
 @login_required
 async def test_db_connect():
     req = await get_request_json()
-    if req["db_type"] == 'BigQuery':
+    if req["db_type"] == 'BigQuery' and req["google_application_credentials_source"] != "adc":
         if not req.get("service_account_credentials_json"):
             return get_json_result(code=RetCode.ARGUMENT_ERROR, message="required argument are missing: service_account_credentials_json; ")
     else:
@@ -552,9 +552,12 @@ async def test_db_connect():
         elif req["db_type"] == 'BigQuery' or req["db_type"] == 'bigquery':
             from google.oauth2 import service_account
             from google.cloud import bigquery
-            service_account_info = json.loads(req["service_account_credentials_json"])
-            credentials = service_account.Credentials.from_service_account_info(service_account_info)
-            client = bigquery.Client(credentials=credentials, project=credentials.project_id)
+            if req["google_application_credentials_source"] == "adc":
+                client = bigquery.Client()
+            else:
+                service_account_info = json.loads(req["service_account_credentials_json"])
+                credentials = service_account.Credentials.from_service_account_info(service_account_info)
+                client = bigquery.Client(credentials=credentials, project=credentials.project_id)
             query_job = client.query("SELECT 1")
             query_job.result()
             return get_json_result(data="Database Connection Successful!")
