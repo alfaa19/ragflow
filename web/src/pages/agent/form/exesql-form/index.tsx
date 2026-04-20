@@ -65,7 +65,7 @@ export function ExeSQLFormWidgets({ loading }: { loading: boolean }) {
       {dbType === 'bigquery' ? (
         <FormField
           control={form.control}
-          name="service_account_json"
+          name="service_account_credentials_json"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Service account JSON</FormLabel>

@@ -52,13 +52,15 @@ class ExeSQLParam(ToolParamBase):
         self.port = 3306
         self.password = ""
         self.max_records = 1024
+        self.service_account_credentials_json = ""
 
     def check(self):
-        self.check_valid_value(self.db_type, "Choose DB type", ['mysql', 'postgres', 'mariadb', 'mssql', 'IBM DB2', 'trino', 'oceanbase'])
-        self.check_empty(self.database, "Database name")
-        self.check_empty(self.username, "database username")
-        self.check_empty(self.host, "IP Address")
-        self.check_positive_integer(self.port, "IP Port")
+        self.check_valid_value(self.db_type, "Choose DB type", ['mysql', 'postgres', 'mariadb', 'mssql', 'IBM DB2', 'trino', 'oceanbase','BigQuery', 'bigquery'])
+        if self.db_type != "BigQuery" and self.db_type != "bigquery":
+            self.check_empty(self.database, "Database name")
+            self.check_empty(self.username, "database username")
+            self.check_empty(self.host, "IP Address")
+            self.check_positive_integer(self.port, "IP Port")
         if self.db_type != "trino":
             self.check_empty(self.password, "Database password")
         self.check_positive_integer(self.max_records, "Maximum number of records")
@@ -237,6 +239,15 @@ class ExeSQL(ToolBase, ABC):
             self.set_output("json", sql_res)
             self.set_output("formalized_content", "\n\n".join(formalized_content))
             return self.output("formalized_content")
+        elif self._param.db_type == 'BigQuery' or self._param.db_type == 'bigquery':
+            from google.oauth2 import service_account
+            from google.cloud import bigquery
+            from google.cloud.bigquery import dbapi
+
+            service_account_info = json.loads(self._param.service_account_credentials_json)
+            credentials = service_account.Credentials.from_service_account_info(service_account_info)
+            client = bigquery.Client(credentials=credentials, project=credentials.project_id)
+            db = dbapi.Connection(client)
         try:
             cursor = db.cursor()
         except Exception as e:

@@ -9,7 +9,7 @@ export const ExeSQLFormSchema = {
   host: z.string(),
   port: z.number(),
   password: z.string().optional().or(z.literal('')),
-  service_account_json: z.string().optional().or(z.literal('')),
+  service_account_credentials_json: z.string().optional().or(z.literal('')),
   max_records: z.number(),
 };
 
@@ -21,20 +21,23 @@ export const FormSchema = z
   .superRefine((v, ctx) => {
     if (v.db_type === 'bigquery') {
       if (
-        !(v.service_account_json && v.service_account_json.trim().length > 0)
+        !(
+          v.service_account_credentials_json &&
+          v.service_account_credentials_json.trim().length > 0
+        )
       ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          path: ['service_account_json'],
+          path: ['service_account_credentials_json'],
           message: 'String must contain at least 1 character(s)',
         });
       } else {
         try {
-          JSON.parse(v.service_account_json);
+          JSON.parse(v.service_account_credentials_json);
         } catch {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            path: ['service_account_json'],
+            path: ['service_account_credentials_json'],
             message: 'Invalid JSON file content',
           });
         }

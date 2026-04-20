@@ -1058,7 +1058,7 @@ export const DataSourceFormFields = {
     },
     {
       label: 'Service Account JSON',
-      name: 'config.credentials.service_account_json',
+      name: 'config.credentials.service_account_credentials_json',
       type: FormFieldType.Textarea,
       required: true,
       tooltip: t('setting.bigqueryServiceAccountTip'),
@@ -1469,7 +1469,7 @@ export const DataSourceFormDefaultValues = {
       id_column: '',
       timestamp_column: '',
       credentials: {
-        service_account_json: '',
+        service_account_credentials_json: '',
       },
     },
   },

@@ -452,7 +452,15 @@ async def debug():
 @login_required
 async def test_db_connect():
     req = await get_request_json()
+    if req["db_type"] == 'BigQuery':
+        if not req.get("service_account_credentials_json"):
+            return get_json_result(code=RetCode.ARGUMENT_ERROR, message="required argument are missing: service_account_credentials_json; ")
+    else:
+        missing = [k for k in ("database", "username", "host", "port", "password") if k not in req]
+        if missing:
+            return get_json_result(code=RetCode.ARGUMENT_ERROR, message=f"required argument are missing: {','.join(missing)}; ")
     try:
+        
         if req["db_type"] in ["mysql", "mariadb"]:
             db = MySQLDatabase(req["database"], user=req["username"], host=req["host"], port=req["port"],
                                password=req["password"])
@@ -540,6 +548,15 @@ async def test_db_connect():
             cur.fetchall()
             cur.close()
             conn.close()
+            return get_json_result(data="Database Connection Successful!")
+        elif req["db_type"] == 'BigQuery' or req["db_type"] == 'bigquery':
+            from google.oauth2 import service_account
+            from google.cloud import bigquery
+            service_account_info = json.loads(req["service_account_credentials_json"])
+            credentials = service_account.Credentials.from_service_account_info(service_account_info)
+            client = bigquery.Client(credentials=credentials, project=credentials.project_id)
+            query_job = client.query("SELECT 1")
+            query_job.result()
             return get_json_result(data="Database Connection Successful!")
         else:
             return server_error_response("Unsupported database type.")
