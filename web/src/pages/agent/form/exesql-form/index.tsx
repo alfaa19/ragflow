@@ -78,7 +78,10 @@ export function ExeSQLFormWidgets({ loading }: { loading: boolean }) {
                   <SelectWithSearch
                     {...field}
                     options={[
-                      { label: 'ADC', value: 'adc' },
+                      {
+                        label: 'Application Default Credentials',
+                        value: 'adc',
+                      },
                       { label: 'Upload', value: 'upload' },
                     ]}
                   ></SelectWithSearch>
