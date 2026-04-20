@@ -36,7 +36,7 @@ export function ExeSQLFormWidgets({ loading }: { loading: boolean }) {
   const dbType = useWatch({ control: form.control, name: 'db_type' });
   const serviceAccountJson = useWatch({
     control: form.control,
-    name: 'service_account_json',
+    name: 'service_account_credentials_json',
   });
   const serviceAccountInputRef = useRef<HTMLInputElement>(null);
   const [serviceAccountFileName, setServiceAccountFileName] = useState('');
