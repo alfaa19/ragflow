@@ -34,8 +34,15 @@ export function ExeSQLFormWidgets({ loading }: { loading: boolean }) {
   const form = useFormContext();
   const { t } = useTranslate('flow');
   const dbType = useWatch({ control: form.control, name: 'db_type' });
+  const serviceAccountJson = useWatch({
+    control: form.control,
+    name: 'service_account_credentials_json',
+  });
   const serviceAccountInputRef = useRef<HTMLInputElement>(null);
   const [serviceAccountFileName, setServiceAccountFileName] = useState('');
+  const hasVerifiedServiceAccount =
+    typeof serviceAccountJson === 'string' &&
+    serviceAccountJson.trim().length > 0;
 
   return (
     <>
@@ -62,8 +69,15 @@ export function ExeSQLFormWidgets({ loading }: { loading: boolean }) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Service account JSON</FormLabel>
+              {hasVerifiedServiceAccount ? (
+                <div className="mb-2">
+                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
+                    Verified
+                  </span>
+                </div>
+              ) : null}
               <FormControl>
-                <div className="flex items-center gap-2">
+                <div className="space-y-2">
                   <Input
                     value={serviceAccountFileName || ''}
                     readOnly
@@ -71,6 +85,7 @@ export function ExeSQLFormWidgets({ loading }: { loading: boolean }) {
                   />
                   <ButtonLoading
                     type="button"
+                    className="w-full"
                     onClick={() => serviceAccountInputRef.current?.click()}
                   >
                     Upload JSON
