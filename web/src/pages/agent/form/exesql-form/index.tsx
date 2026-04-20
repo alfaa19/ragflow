@@ -38,6 +38,10 @@ export function ExeSQLFormWidgets({ loading }: { loading: boolean }) {
     control: form.control,
     name: 'service_account_credentials_json',
   });
+  const googleApplicationCredentialsSource = useWatch({
+    control: form.control,
+    name: 'google_application_credentials_source',
+  });
   const serviceAccountInputRef = useRef<HTMLInputElement>(null);
   const [serviceAccountFileName, setServiceAccountFileName] = useState('');
   const hasVerifiedServiceAccount =
@@ -63,54 +67,77 @@ export function ExeSQLFormWidgets({ loading }: { loading: boolean }) {
         )}
       />
       {dbType === 'bigquery' ? (
-        <FormField
-          control={form.control}
-          name="service_account_credentials_json"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Service account JSON</FormLabel>
-              {hasVerifiedServiceAccount ? (
-                <div className="mb-2">
-                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
-                    Verified
-                  </span>
-                </div>
-              ) : null}
-              <FormControl>
-                <div className="space-y-2">
-                  <Input
-                    value={serviceAccountFileName || ''}
-                    readOnly
-                    placeholder="No file selected"
-                  />
-                  <ButtonLoading
-                    type="button"
-                    className="w-full"
-                    onClick={() => serviceAccountInputRef.current?.click()}
-                  >
-                    Upload JSON
-                  </ButtonLoading>
-                  <input
-                    ref={serviceAccountInputRef}
-                    className="hidden"
-                    type="file"
-                    accept=".json,application/json"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) {
-                        return;
-                      }
-                      const content = await file.text();
-                      field.onChange(content);
-                      setServiceAccountFileName(file.name);
-                    }}
-                  />
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <>
+          <FormField
+            control={form.control}
+            name="google_application_credentials_source"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Credentials source</FormLabel>
+                <FormControl>
+                  <SelectWithSearch
+                    {...field}
+                    options={[
+                      { label: 'ADC', value: 'adc' },
+                      { label: 'Upload', value: 'upload' },
+                    ]}
+                  ></SelectWithSearch>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {googleApplicationCredentialsSource !== 'adc' ? (
+            <FormField
+              control={form.control}
+              name="service_account_credentials_json"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Service account JSON</FormLabel>
+                  {hasVerifiedServiceAccount ? (
+                    <div className="mb-2">
+                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
+                        Verified
+                      </span>
+                    </div>
+                  ) : null}
+                  <FormControl>
+                    <div className="space-y-2">
+                      <Input
+                        value={serviceAccountFileName || ''}
+                        readOnly
+                        placeholder="No file selected"
+                      />
+                      <ButtonLoading
+                        type="button"
+                        className="w-full"
+                        onClick={() => serviceAccountInputRef.current?.click()}
+                      >
+                        Upload JSON
+                      </ButtonLoading>
+                      <input
+                        ref={serviceAccountInputRef}
+                        className="hidden"
+                        type="file"
+                        accept=".json,application/json"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) {
+                            return;
+                          }
+                          const content = await file.text();
+                          field.onChange(content);
+                          setServiceAccountFileName(file.name);
+                        }}
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ) : null}
+        </>
       ) : (
         <>
           <FormField

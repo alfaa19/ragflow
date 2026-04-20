@@ -4,6 +4,10 @@ import { z } from 'zod';
 
 export const ExeSQLFormSchema = {
   db_type: z.string().min(1),
+  google_application_credentials_source: z
+    .enum(['adc', 'upload'])
+    .optional()
+    .default('upload'),
   database: z.string(),
   username: z.string(),
   host: z.string(),
@@ -20,6 +24,12 @@ export const FormSchema = z
   })
   .superRefine((v, ctx) => {
     if (v.db_type === 'bigquery') {
+      const credentialSource =
+        v.google_application_credentials_source?.toLowerCase() ?? 'upload';
+      if (credentialSource === 'adc') {
+        return;
+      }
+
       if (
         !(
           v.service_account_credentials_json &&
