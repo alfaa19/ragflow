@@ -290,6 +290,7 @@ export const initialGithubValues = {
 export const initialExeSqlValues = {
   sql: '',
   db_type: 'mysql',
+  google_application_credentials_source: 'upload',
   database: '',
   username: '',
   host: '',
